@@ -1,54 +1,84 @@
-<script> var MY_MODEL_ID = '23b40b32f9954c8f9620867014f4d070'; var MY_AUDIO_FILE = './tio.mp4'; </script>
+<script>
+    // === EDIT THESE TWO LINES ONLY ===
+    var MY_MODEL_ID = '23b40b32f9954c8f9620867014f4d070'; 
+    var MY_AUDIO_FILE = './tio.mp4'; // Matching your filename exactly
+</script>
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Sketchfab Bismarck Scene</title>
+    <meta charset="UTF-8">
+    <title>Bismarck Experience</title>
+    <!-- Loading the Sketchfab API -->
     <script src="https://sketchfab.com"></script>
     <style>
-        body { margin: 0; background: #000; font-family: sans-serif; overflow: hidden; }
-        iframe { width: 100vw; height: 100vh; border: 0; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
         #overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; color: white; cursor: pointer; z-index: 10;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #111; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; cursor: pointer; z-index: 9999;
         }
+        iframe { width: 100vw; height: 100vh; border: 0; display: block; }
+        .btn { padding: 20px 40px; background: #c00; border: none; color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; border-radius: 8px; margin-top: 20px; }
+        .btn:hover { background: #e00; }
     </style>
 </head>
 <body>
 
-<div id="overlay">
-    <h1>Launch Bismarck Model</h1>
-    <p>Click to start with audio</p>
+<div id="overlay" onclick="startExperience()">
+    <h1>Bismarck 3D Scene</h1>
+    <button class="btn">CLICK TO START WITH AUDIO</button>
+    <p style="margin-top:20px; opacity:0.5;">(Wait for model to load after clicking)</p>
 </div>
 
 <iframe src="" id="api-frame" allow="autoplay; fullscreen; vr"></iframe>
-
-<!-- Hidden Video element used for Audio -->
-<video id="bg-media" loop style="display:none;"></video>
+<video id="bg-media" loop playsinline style="display:none;"></video>
 
 <script>
     var iframe = document.getElementById('api-frame');
     var media = document.getElementById('bg-media');
     var overlay = document.getElementById('overlay');
-    var client = new window.Sketchfab('1.12.1', iframe);
-
-    // Set the source from the variable at the top
+    
+    // Set the source immediately
     media.src = MY_AUDIO_FILE;
 
-    overlay.addEventListener('click', function() {
+    function startExperience() {
+        console.log("Initializing...");
         overlay.style.display = 'none';
 
+        // Check if Sketchfab API loaded
+        if (typeof window.Sketchfab === 'undefined') {
+            alert("Error: Sketchfab API script failed to load. Check your internet connection.");
+            return;
+        }
+
+        var client = new window.Sketchfab('1.12.1', iframe);
+        
         client.init(MY_MODEL_ID, {
             success: function onSuccess(api) {
                 api.start();
                 api.addEventListener('viewerready', function() {
-                    media.play().catch(e => console.log("Playback blocked:", e));
+                    console.log("Model ready - attempting to play tio.mp4");
+                    
+                    // Unmute and play
+                    media.muted = false;
+                    var playPromise = media.play();
+
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function(error) {
+                            console.log("Playback failed: " + error);
+                            alert("Audio was blocked by browser. Click anywhere on the model to try again.");
+                        });
+                    }
                 });
+            },
+            error: function() {
+                alert("Sketchfab failed to initialize. Is the Model ID correct?");
             },
             autostart: 1,
             preload: 1
         });
-    });
+    }
 </script>
 </body>
 </html>
